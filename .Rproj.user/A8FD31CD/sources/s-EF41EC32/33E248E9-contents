@@ -1,0 +1,242 @@
+---
+title: "Project 2"
+author: "Alissandra Ayala"
+date: "11/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(ggplot2) 
+library(sandwich) 
+library(lmtest) 
+library(dplyr)
+library(plotROC)
+library(glmnet)
+salamander <- read.csv("./NewAgeClasses.csv", header = TRUE)
+
+```
+Meet my Salamander dataset. This is data I have collected in lab as part of Kemp Lab (a paleobiology/ecology/conservation biology lab) for my personal project. This data is from extant species of salamanders that we have in Texas, around Hall's Cave where fossils (of a mystery species) I am interested in have been collected. We are specifically looking at vertebral characters to age/identify them so this dataset is the first step in creating an index. The first column lists what vertebra we are looking at; atlas or sacrum. The second column is species. The fourth and fifth columns are Anterior and Posterior Snout-Vent Length. This is a standard bodysize measurement for lizards and salamanders that does not include their tail. Because salamanders' vents are a vertical slit, there is an anterior and posterior measurement. Notochord and Neural Crest are the characters of each vertebra that we are interested in. Whether a notochord is open or closed is a great indication of age. Whether a neural crest is fully closed can be a measure of the amount of ossification, which is another indicator of age. A higher value of the last values is associated with an older age of specimen. I had to delete 2 observations which had "approximately" in their SVLs, and I could not accurately substitute a value.
+
+```{r }
+#MANOVA test
+salman <- manova(cbind(AnteriorSVL,PosteriorSVL)~Species, data=salamander)
+summary(salman)
+
+#univariate anova
+summary.aov(salman)
+
+#posthoc t test
+pairwise.t.test(salamander$AnteriorSVL, salamander$Species, p.adj = "none")
+pairwise.t.test(salamander$PosteriorSVL, salamander$Species, p.adj = "none")
+
+#Type I error rate
+1-(0.95^4)
+
+#bonferroni correction
+.05/4
+
+```
+
+The numeric variables Anterior SVL and Posterior SVL show differences in mean across levels (Species)! After running the univariate ANOVA, we see that both anterior SVL and posterior SVL differ significantly between species. After performing the post hoc tests we see that the species differ from each other, particularly Tigrinum and Mavortium in both ASVL and PSVL. Texanum and Mavortium only differ in ASVL. We have performed a total of 4 statistical tests which gives us .1855 as the probability of a Type I error. With the Bonferroni correction, the adjusted p value is 0.0125. For the ANOVA assumptions, these salamanders were collected by several different scientists in different regions around Texas which had different resources. We can't assume that there is homogeneity of variance in each group. As for the MANOVA assumptions, we can't assume that there are no outliers.
+```{r}
+#randomization test 
+library(vegan)
+dist<-vegdist(sqrt(salamander[,-c(1,2,3,6,7)]))
+
+texas<-adonis(dist~Species, data=salamander, method = "bray")
+print(texas)
+
+hist(texas$f.perms[,1]) #histogram for assessment of the first factor
+
+
+```
+The null hypothesis is that SVL does not differ between Species. The alternative hypothesis is that SVL differs between species. My P value is much smaller using this PERMANOVA test than the ANOVA test. This is because the PERMANOVA is not restricted by assumptions. The PERMANOVA is significant. The distribution of my PERMANOVA is right skewed.
+p.perms is the permutations of the pseudo f statistic.
+Component 'f.perms' is the matrix of F.Model for the 99
+permutations (rows) for the 3 covariates (columns). So the permutation F
+distribution for Management is in mod$f.perms[,1], e.g.
+
+```{r}
+#change sacrum/notochord to factor instead of numeric: Should I do this?
+#salamander$Atlas.Neural.Crest <-factor(salamander$Atlas.Neural.Crest)
+#salamander$Sacrum.Notochord <- factor(salamander$Sacrum.Notochord)
+
+#linear regression how to change notochord to binary variable (not numeric)
+fit1<-lm(PosteriorSVL~Sacrum.Notochord* Atlas.Neural.Crest, data=salamander)
+coef(fit1)
+
+#plot
+salamander %>% ggplot(aes(PosteriorSVL,Atlas.Neural.Crest))+ geom_point()+ geom_smooth(method='lm', se=F)
+
+#check assumptions (LINE)
+#Linear relationship: failed?
+resids<-fit1$residuals
+fitvals<-fit1$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color='red')
+#Independent, random sample: check!
+#Normally distributed residuals:check!
+ggplot()+geom_histogram(aes(resids), bins=20)
+#Equal variance/homoskedacity:failed?
+ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids))
+#heteroskedacity robust SE
+library(lmtest)
+fit<-lm(PosteriorSVL~Sacrum.Notochord * Atlas.Neural.Crest,data=salamander)
+bptest(fit)
+
+coeftest(fit, vcov = vcovHC(fit))[,1:2]
+
+#proportion explained
+ summary(fit)
+
+ #without interactions
+ fit2<-lm(PosteriorSVL~Sacrum.Notochord+ Atlas.Neural.Crest, data=salamander)
+coef(fit2)
+
+#liklihood ratio test
+lrtest(fit,fit2)
+
+```
+From the linear regression, we learn that, having a closed notochord or neural crest has a positive effect (increase mean SVL). When we control for Neural Crest status, a salamander with a closed notochord's mean SVL increases by a value of 4.66. When we control for notochord status, a salamander with a closed neural crest's mean SVL increases by a value of 19.9! There appears to be no interaction. When we plot Neural Crest status against Posterior SVL, we see that Salamanders with a closed neural crest tend to have a larger body size. When I check the assumptions, only the middle 2 (IN) are met. From the coeftest with robust standard error, we see that nothing is significant. My model explains 18.93% of the variance, based on my R squared value. The coeftest with no interactions gives us the exact same results as the one I performed with interactions. The liklihood ratio test tells us that the models are the same.
+
+```{r}
+#Linear Regression with Interactions and bootstrapped SEs
+samp_distn<-replicate(5000, {
+  boot_dat<-salamander[sample(nrow(salamander),replace=TRUE),]
+  fit3<-lm(PosteriorSVL~Sacrum.Notochord* Atlas.Neural.Crest, data=salamander)
+  coef(fit3)
+})
+
+samp_distn%>%t%>%as.data.frame%>%summarize_all(sd)
+```
+Based on the coefficient values I get for Notochord status and Neural Crest status, they have no difference in predictive value for Posterior SVL. This is an interesting result because one would expect a salamander with a closed notochord or neural crest (a trait that older salamanders have) would have a larger PSVL than a salamander with an open notochord or neural crest.
+
+```{r pres, echo=FALSE, eval=F![](/./Project2_files/IMG_8821.jpg)}
+#Logistic Regression with Binary Categorical Variable
+fit4<-glm(Sacrum.Notochord ~ PosteriorSVL+ AnteriorSVL, data=salamander)
+summary(fit4)
+
+#confusion matrix
+prob <- predict(fit4, type = "response")
+pred <- ifelse(prob > 0.5, 1, 0)
+table(truth = salamander$Atlas.Neural.Crest, prediction = pred) %>% addmargins
+#Accuracy,TPR(sensitivity), TNR(specificity), PPV(recall)
+(3+30)/39
+
+30/35
+
+3/4
+
+30/31
+
+#log-odds (logit) plot of binary outcome variable- what is this doing?
+logit<-function(p)log(odds(p))
+odds<-function(p)p/(1-p)
+p<-seq(0,1,by=.1)
+cbind(p, odds=odds(p),logit=logit(p))%>%round(4)
+
+
+ggplot()+stat_function(aes(x=seq(.01,.99,.01)),fun=logit,geom="line")+ylab("g(p)=logit(p)")+xlab("p")
+#ROC curve +AUC
+ROC <- ggplot(fit4) + geom_roc(aes(d = Sacrum.Notochord, m = prob), n.cuts = 0) +
+    geom_segment(aes(x = 0, y = 0, xend = 1, yend = 1), lty = 2) +
+    scale_x_continuous(limits = c(0, 1))
+ROC
+
+calc_auc(ROC)
+#10-fold CV
+class_diag<-function(probs,truth){
+  
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+  
+  #CALCULATE EXACT AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}
+
+set.seed(1234)
+k = 9
+
+nusalamander <- salamander[sample(nrow(salamander)), ]
+folds <- cut(seq(1:nrow(nusalamander)), breaks = k, labels = F)
+
+diags <- NULL 
+for (i in 1:k) {
+    train <- nusalamander[folds != i, ]
+    test <- nusalamander[folds == i, ]
+    truth <- test$Sacrum.Notochord
+    fit5<- glm(Sacrum.Notochord ~ PosteriorSVL+ AnteriorSVL, data=salamander,
+         family = "binomial")
+probs <- predict(fit5, newdata = test, type = "response")
+diags <- rbind(diags, class_diag(probs, truth))
+}
+
+apply(diags, 2, mean)
+
+
+```
+The logistic regression does not give us back significant results. Posterior and Anterior SVL do not significantly predict Neural Crest Status. When we hold Anterior SVL constant, for every 1 unit in PSVL, we expect the response to go down by .44%. When we hold Posterior SVL constant, for every 1 unit in ASVL, we expect the response to increase by 6.3%. From the confusion table, the accuracy is 84.6%, the sensitivity is 85.7%, the specificity is 75%, and the recall is 96.77%. The AUC of the ROC curve is 0.72. The out of sample accuracy is 62.22%, the sensitivity is 79.63%, the specificity is 27.78%, and the ppv is 62.96%. I had to do a 9 fold CV because my data is too small to have good training data when it is divided into 10 parts.
+
+```{r eval = F}
+#LASSO regression
+
+fit6 <- glm(Sacrum.Notochord~ ., data = salamander, family = "binomial")
+y <- as.matrix(salamander$Sacrum.Notochord)
+x <- model.matrix(fit6)[, -1]
+x <- scale(x)
+cv <- cv.glmnet(x, y, family = "binomial")
+lasso1 <- glmnet(x, y, lambda = cv$lambda.1se, family = "binomial")
+coef(lasso1)
+
+sal <- data.frame(salamander$Species == "Texanum", salamander$AgeClass ==
+     "Unknown", salamander$Atlas.Neural.Crest, salamander$Spongy.Lateral, salamander$Sacrum.Notochord)
+ names(sal) <- c("Texanum", "UnknownAge", "NeuralCrest", "SpongyLat", "Notochord")
+
+#CV- can't find my variables whether I make a new df or not!!
+set.seed(1234)
+k=9
+sald<-sal[sample(nrow(sal)),]
+folds<-cut(seq(1:nrow(sal)),breaks=k,labels=F)
+
+diags<-NULL
+for(i in 1:k){
+  train<-sald[folds!=i,]
+  test<-sald[folds==i,]
+  truth<-test$Notochord
+  
+  fit7<-glm(Notochord~.,data=train, family="binomial")
+  probs<-predict(fit7,newdata = test,type="response")
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+
+apply(diags, 2, mean)
+```
+The lambda value that gives me the simplest model is 0.1500069. The coeftest on the lasso tells us that SpeciesTexanum, Atlas.Neural.Crest, Spongy.Lateral, and AgeClassUnknown. Now that I have rerun my CV with only the significant variables, my AUC has increased from 0.6759 to 0.8433! My out of sample accuracy is 72.58%, my out of sample sensitivity is 86.42%, my specificity is 47.25%, and my ppv is 76.92%. All of them have increased in value compared to my previous CV.
+
+[Link to project 2](/Project2)

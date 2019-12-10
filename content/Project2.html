@@ -1,0 +1,249 @@
+---
+title: "Project 2"
+author: "Alissandra Ayala"
+date: "11/17/2019"
+output: html_document
+---
+
+
+
+<div id="r-markdown" class="section level2">
+<h2>R Markdown</h2>
+<p>This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>.</p>
+<p>When you click the <strong>Knit</strong> button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</p>
+<pre class="r"><code>library(ggplot2) 
+library(sandwich) 
+library(lmtest) </code></pre>
+<pre><code>## Loading required package: zoo</code></pre>
+<pre><code>## 
+## Attaching package: &#39;zoo&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.Date, as.Date.numeric</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(plotROC)
+library(glmnet)</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## Loaded glmnet 3.0-1</code></pre>
+<pre class="r"><code>salamander &lt;- read.csv(&quot;./NewAgeClasses.csv&quot;, header = TRUE)</code></pre>
+<p>Meet my Salamander dataset. This is data I have collected in lab as part of Kemp Lab (a paleobiology/ecology/conservation biology lab) for my personal project. This data is from extant species of salamanders that we have in Texas, around Hall’s Cave where fossils (of a mystery species) I am interested in have been collected. We are specifically looking at vertebral characters to age/identify them so this dataset is the first step in creating an index. The first column lists what vertebra we are looking at; atlas or sacrum. The second column is species. The fourth and fifth columns are Anterior and Posterior Snout-Vent Length. This is a standard bodysize measurement for lizards and salamanders that does not include their tail. Because salamanders’ vents are a vertical slit, there is an anterior and posterior measurement. Notochord and Neural Crest are the characters of each vertebra that we are interested in. Whether a notochord is open or closed is a great indication of age. Whether a neural crest is fully closed can be a measure of the amount of ossification, which is another indicator of age. A higher value of the last values is associated with an older age of specimen. I had to delete 2 observations which had “approximately” in their SVLs, and I could not accurately substitute a value.</p>
+<pre class="r"><code>#MANOVA test
+salman &lt;- manova(cbind(AnteriorSVL,PosteriorSVL)~Species, data=salamander)
+summary(salman)</code></pre>
+<pre><code>##           Df  Pillai approx F num Df den Df  Pr(&gt;F)  
+## Species    2 0.25705   2.6547      4     72 0.03976 *
+## Residuals 36                                         
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>#univariate anova
+summary.aov(salman)</code></pre>
+<pre><code>##  Response AnteriorSVL :
+##             Df Sum Sq Mean Sq F value  Pr(&gt;F)  
+## Species      2 1155.5  577.76  3.0881 0.05784 .
+## Residuals   36 6735.4  187.10                  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response PosteriorSVL :
+##             Df Sum Sq Mean Sq F value  Pr(&gt;F)  
+## Species      2 1526.4  763.19   2.884 0.06891 .
+## Residuals   36 9526.7  264.63                  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>#posthoc t test
+pairwise.t.test(salamander$AnteriorSVL, salamander$Species, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  salamander$AnteriorSVL and salamander$Species 
+## 
+##          Mavortium Texanum
+## Texanum  0.047     -      
+## Tigrinum 0.027     0.906  
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(salamander$PosteriorSVL, salamander$Species, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  salamander$PosteriorSVL and salamander$Species 
+## 
+##          Mavortium Texanum
+## Texanum  0.071     -      
+## Tigrinum 0.027     0.929  
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>#Type I error rate
+1-(0.95^4)</code></pre>
+<pre><code>## [1] 0.1854938</code></pre>
+<pre class="r"><code>#bonferroni correction
+.05/4</code></pre>
+<pre><code>## [1] 0.0125</code></pre>
+<p>The numeric variables Anterior SVL and Posterior SVL show differences in mean across levels (Species)! After running the univariate ANOVA, we see that both anterior SVL and posterior SVL differ significantly between species. After performing the post hoc tests we see that the species differ from each other, particularly Tigrinum and Mavortium in both ASVL and PSVL. Texanum and Mavortium only differ in ASVL. We have performed a total of 4 statistical tests which gives us .1855 as the probability of a Type I error. With the Bonferroni correction, the adjusted p value is 0.0125. For the ANOVA assumptions, these salamanders were collected by several different scientists in different regions around Texas which had different resources. We can’t assume that there is homogeneity of variance in each group. As for the MANOVA assumptions, we can’t assume that there are no outliers.</p>
+<pre class="r"><code>#randomization test 
+library(vegan)</code></pre>
+<pre><code>## Loading required package: permute</code></pre>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre><code>## This is vegan 2.5-6</code></pre>
+<pre class="r"><code>dist&lt;-vegdist(sqrt(salamander[,-c(1,2,3,6,7)]))
+
+texas&lt;-adonis(dist~Species, data=salamander, method = &quot;bray&quot;)
+print(texas)</code></pre>
+<pre><code>## 
+## Call:
+## adonis(formula = dist ~ Species, data = salamander, method = &quot;bray&quot;) 
+## 
+## Permutation: free
+## Number of permutations: 999
+## 
+## Terms added sequentially (first to last)
+## 
+##           Df SumsOfSqs  MeanSqs F.Model      R2 Pr(&gt;F)   
+## Species    2  0.084702 0.042351  7.2622 0.28747  0.002 **
+## Residuals 36  0.209941 0.005832         0.71253          
+## Total     38  0.294643                  1.00000          
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>hist(texas$f.perms[,1]) #histogram for assessment of the first factor</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-2-1.png" width="672" />
+The null hypothesis is that SVL does not differ between Species. The alternative hypothesis is that SVL differs between species. My P value is much smaller using this PERMANOVA test than the ANOVA test. This is because the PERMANOVA is not restricted by assumptions. The PERMANOVA is significant. The distribution of my PERMANOVA is right skewed.
+p.perms is the permutations of the pseudo f statistic.
+Component ‘f.perms’ is the matrix of F.Model for the 99
+permutations (rows) for the 3 covariates (columns). So the permutation F
+distribution for Management is in mod$f.perms[,1], e.g.</p>
+<pre class="r"><code>#change sacrum/notochord to factor instead of numeric: Should I do this?
+#salamander$Atlas.Neural.Crest &lt;-factor(salamander$Atlas.Neural.Crest)
+#salamander$Sacrum.Notochord &lt;- factor(salamander$Sacrum.Notochord)
+
+#linear regression how to change notochord to binary variable (not numeric)
+fit1&lt;-lm(PosteriorSVL~Sacrum.Notochord* Atlas.Neural.Crest, data=salamander)
+coef(fit1)</code></pre>
+<pre><code>##                         (Intercept)                    Sacrum.Notochord 
+##                               56.00                                4.66 
+##                  Atlas.Neural.Crest Sacrum.Notochord:Atlas.Neural.Crest 
+##                               19.90                                  NA</code></pre>
+<pre class="r"><code>#plot
+salamander %&gt;% ggplot(aes(PosteriorSVL,Atlas.Neural.Crest))+ geom_point()+ geom_smooth(method=&#39;lm&#39;, se=F)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>#check assumptions (LINE)
+#Linear relationship: failed?
+resids&lt;-fit1$residuals
+fitvals&lt;-fit1$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color=&#39;red&#39;)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
+<pre class="r"><code>#Independent, random sample: check!
+#Normally distributed residuals:check!
+ggplot()+geom_histogram(aes(resids), bins=20)</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-3.png" width="672" /></p>
+<pre class="r"><code>#Equal variance/homoskedacity:failed?
+ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids))</code></pre>
+<p><img src="/Project2_files/figure-html/unnamed-chunk-3-4.png" width="672" /></p>
+<pre class="r"><code>#heteroskedacity robust SE
+library(lmtest)
+fit&lt;-lm(PosteriorSVL~Sacrum.Notochord * Atlas.Neural.Crest,data=salamander)
+bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 0.51993, df = 2, p-value = 0.7711</code></pre>
+<pre class="r"><code>coeftest(fit, vcov = vcovHC(fit))[,1:2]</code></pre>
+<pre><code>##                    Estimate Std. Error
+## (Intercept)           56.00  12.560962
+## Sacrum.Notochord       4.66   5.709821
+## Atlas.Neural.Crest    19.90  13.434294</code></pre>
+<pre class="r"><code>#proportion explained
+ summary(fit)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = PosteriorSVL ~ Sacrum.Notochord * Atlas.Neural.Crest, 
+##     data = salamander)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -23.56  -8.56  -2.56   3.77  47.44 
+## 
+## Coefficients: (1 not defined because of singularities)
+##                                     Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                           56.000      7.889   7.099 2.44e-08 ***
+## Sacrum.Notochord                       4.660      5.903   0.789   0.4351    
+## Atlas.Neural.Crest                    19.900      9.334   2.132   0.0399 *  
+## Sacrum.Notochord:Atlas.Neural.Crest       NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 15.78 on 36 degrees of freedom
+## Multiple R-squared:  0.1893, Adjusted R-squared:  0.1442 
+## F-statistic: 4.202 on 2 and 36 DF,  p-value: 0.0229</code></pre>
+<pre class="r"><code> #without interactions
+ fit2&lt;-lm(PosteriorSVL~Sacrum.Notochord+ Atlas.Neural.Crest, data=salamander)
+coef(fit2)</code></pre>
+<pre><code>##        (Intercept)   Sacrum.Notochord Atlas.Neural.Crest 
+##              56.00               4.66              19.90</code></pre>
+<pre class="r"><code>#liklihood ratio test
+lrtest(fit,fit2)</code></pre>
+<pre><code>## Likelihood ratio test
+## 
+## Model 1: PosteriorSVL ~ Sacrum.Notochord * Atlas.Neural.Crest
+## Model 2: PosteriorSVL ~ Sacrum.Notochord + Atlas.Neural.Crest
+##   #Df  LogLik Df Chisq Pr(&gt;Chisq)
+## 1   4 -161.36                    
+## 2   4 -161.36  0     0          1</code></pre>
+<p>From the linear regression, we learn that, having a closed notochord or neural crest has a positive effect (increase mean SVL). When we control for Neural Crest status, a salamander with a closed notochord’s mean SVL increases by a value of 4.66. When we control for notochord status, a salamander with a closed neural crest’s mean SVL increases by a value of 19.9! There appears to be no interaction. When we plot Neural Crest status against Posterior SVL, we see that Salamanders with a closed neural crest tend to have a larger body size. When I check the assumptions, only the middle 2 (IN) are met. From the coeftest with robust standard error, we see that nothing is significant. My model explains 18.93% of the variance, based on my R squared value. The coeftest with no interactions gives us the exact same results as the one I performed with interactions. The liklihood ratio test tells us that the models are the same.</p>
+<pre class="r"><code>#Linear Regression with Interactions and bootstrapped SEs
+samp_distn&lt;-replicate(5000, {
+  boot_dat&lt;-salamander[sample(nrow(salamander),replace=TRUE),]
+  fit3&lt;-lm(PosteriorSVL~Sacrum.Notochord* Atlas.Neural.Crest, data=salamander)
+  coef(fit3)
+})
+
+samp_distn%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept) Sacrum.Notochord Atlas.Neural.Crest
+## 1           0                0                  0
+##   Sacrum.Notochord:Atlas.Neural.Crest
+## 1                                  NA</code></pre>
+<p>Based on the coefficient values I get for Notochord status and Neural Crest status, they have no difference in predictive value for Posterior SVL. This is an interesting result because one would expect a salamander with a closed notochord or neural crest (a trait that older salamanders have) would have a larger PSVL than a salamander with an open notochord or neural crest.</p>
+<p>The logistic regression does not give us back significant results. Posterior and Anterior SVL do not significantly predict Neural Crest Status. When we hold Anterior SVL constant, for every 1 unit in PSVL, we expect the response to go down by .44%. When we hold Posterior SVL constant, for every 1 unit in ASVL, we expect the response to increase by 6.3%. From the confusion table, the accuracy is 84.6%, the sensitivity is 85.7%, the specificity is 75%, and the recall is 96.77%. The AUC of the ROC curve is 0.72. The out of sample accuracy is 62.22%, the sensitivity is 79.63%, the specificity is 27.78%, and the ppv is 62.96%. I had to do a 9 fold CV because my data is too small to have good training data when it is divided into 10 parts.</p>
+<pre class="r"><code>#LASSO regression
+
+fit6 &lt;- glm(Sacrum.Notochord~ ., data = salamander, family = &quot;binomial&quot;)
+y &lt;- as.matrix(salamander$Sacrum.Notochord)
+x &lt;- model.matrix(fit6)[, -1]
+x &lt;- scale(x)
+cv &lt;- cv.glmnet(x, y, family = &quot;binomial&quot;)
+lasso1 &lt;- glmnet(x, y, lambda = cv$lambda.1se, family = &quot;binomial&quot;)
+coef(lasso1)
+
+sal &lt;- data.frame(salamander$Species == &quot;Texanum&quot;, salamander$AgeClass ==
+     &quot;Unknown&quot;, salamander$Atlas.Neural.Crest, salamander$Spongy.Lateral, salamander$Sacrum.Notochord)
+ names(sal) &lt;- c(&quot;Texanum&quot;, &quot;UnknownAge&quot;, &quot;NeuralCrest&quot;, &quot;SpongyLat&quot;, &quot;Notochord&quot;)
+
+#CV- can&#39;t find my variables whether I make a new df or not!!
+set.seed(1234)
+k=9
+sald&lt;-sal[sample(nrow(sal)),]
+folds&lt;-cut(seq(1:nrow(sal)),breaks=k,labels=F)
+
+diags&lt;-NULL
+for(i in 1:k){
+  train&lt;-sald[folds!=i,]
+  test&lt;-sald[folds==i,]
+  truth&lt;-test$Notochord
+  
+  fit7&lt;-glm(Notochord~.,data=train, family=&quot;binomial&quot;)
+  probs&lt;-predict(fit7,newdata = test,type=&quot;response&quot;)
+  diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+
+apply(diags, 2, mean)</code></pre>
+<p>The lambda value that gives me the simplest model is 0.1500069. The coeftest on the lasso tells us that SpeciesTexanum, Atlas.Neural.Crest, Spongy.Lateral, and AgeClassUnknown. Now that I have rerun my CV with only the significant variables, my AUC has increased from 0.6759 to 0.8433! My out of sample accuracy is 72.58%, my out of sample sensitivity is 86.42%, my specificity is 47.25%, and my ppv is 76.92%. All of them have increased in value compared to my previous CV.</p>
+<p><a href="/Project2">Link to project 2</a></p>
+</div>

@@ -1,0 +1,369 @@
+---
+title: "Ayala Project 1: Learning How To Tidy"
+author: "Alissandra Ayala, Ecologist in Training"
+date: "10/14/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+
+<p>I have chosen to work with these datasets because I am interested in pursuing a career in ecology and conservation. The first dataset I am working with details the lifespan of several species of zoo animals. Its variables include scientific and common names, taxon, overall minimum life expectancy, overall sample size, and several of the same categories broken up by male and female sex (because life expectancy can often depend on sex). The second dataset I am working with details the body size of several primates involved in an ecological study. This dataset contains variables such as family, genus, Common name, scientific name, body mass in kg overall, body mass in kg by sex, and sample size (Ref1). These 2 datasets have 2 variables in common: scientific name and common name. I do not expect any associations between the data, however I expect that female animals will have a larger life expectancy in the data from the first dataset.</p>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(tidyr)
+library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.2.0     ✔ purrr   0.3.2
+## ✔ tibble  2.1.3     ✔ stringr 1.4.0
+## ✔ readr   1.3.1     ✔ forcats 0.4.0</code></pre>
+<pre><code>## ── Conflicts ───────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(ggplot2)
+
+
+#Importing my data
+df1&lt;-read.csv(&quot;./BodyMass.csv&quot;)
+df2&lt;-read.csv(&quot;./AZA_MLE_Jul2018.csv&quot;)  
+
+#tidying data and joining it
+df1&lt;-df1%&gt;%na.omit
+df2&lt;-df2%&gt;%select(-c(16,17))
+df1&lt;-df1%&gt;%mutate(Species=gsub(&quot;_&quot;,&quot; &quot;,Species))
+animaldata&lt;-df1%&gt;%full_join(df2,by=c(&quot;Species&quot;=&quot;Scientific.Name&quot;))</code></pre>
+<pre><code>## Warning: Column `Species`/`Scientific.Name` joining character vector and factor,
+## coercing into character vector</code></pre>
+<pre class="r"><code>head(animaldata)</code></pre>
+<pre><code>##            Family          Genus              CommonName
+## 1 Cercopithecidae Allenopithecus    Allen_s_Swamp_Monkey
+## 2  Cheirogaleidae      Allocebus Hairy_eared_Dwarf_Lemur
+## 3 Cercopithecidae  Allochrocebus        L_Hoest_s_Monkey
+## 4 Cercopithecidae  Allochrocebus         Preuss_s_Monkey
+## 5 Cercopithecidae  Allochrocebus       Sun_tailed_Monkey
+## 6        Atelidae       Alouatta       Ursine_Red_Howler
+##                       Species              Species..ITIS. BodyMass_kg
+## 1 Allenopithecus nigroviridis Allenopithecus_nigroviridis        4.65
+## 2         Allocebus trichotis         Allocebus_trichotis        0.08
+## 3       Allochrocebus lhoesti       Allochrocebus_lhoesti        5.00
+## 4       Allochrocebus preussi       Allochrocebus_preussi        3.80
+## 5       Allochrocebus solatus       Allochrocebus_solatus        5.40
+## 6          Alouatta arctoidea          Alouatta_arctoidea        6.37
+##   BodyMassMale_kg BodyMassFemale_kg Refs1 Species.Common.Name TaxonClass
+## 1           6.130             3.180   210                &lt;NA&gt;       &lt;NA&gt;
+## 2           0.092             0.084   315                &lt;NA&gt;       &lt;NA&gt;
+## 3           7.000             3.000   155                &lt;NA&gt;       &lt;NA&gt;
+## 4           4.700             2.900   333                &lt;NA&gt;       &lt;NA&gt;
+## 5           6.890             3.920   326                &lt;NA&gt;       &lt;NA&gt;
+## 6           7.000             5.750   380                &lt;NA&gt;       &lt;NA&gt;
+##   Overall.Sample.Size Overall.MLE Overall.CI...lower Overall.CI...upper
+## 1                  NA          NA                 NA                 NA
+## 2                  NA          NA                 NA                 NA
+## 3                  NA          NA                 NA                 NA
+## 4                  NA          NA                 NA                 NA
+## 5                  NA          NA                 NA                 NA
+## 6                  NA          NA                 NA                 NA
+##   Male.Sample.Size Male.MLE Male.CI...lower Male.CI...upper Female.Sample.Size
+## 1               NA       NA              NA              NA                 NA
+## 2               NA       NA              NA              NA                 NA
+## 3               NA       NA              NA              NA                 NA
+## 4               NA       NA              NA              NA                 NA
+## 5               NA       NA              NA              NA                 NA
+## 6               NA       NA              NA              NA                 NA
+##   Female.MLE Female.CI...lower Female.CI...upper
+## 1         NA                NA              &lt;NA&gt;
+## 2         NA                NA              &lt;NA&gt;
+## 3         NA                NA              &lt;NA&gt;
+## 4         NA                NA              &lt;NA&gt;
+## 5         NA                NA              &lt;NA&gt;
+## 6         NA                NA              &lt;NA&gt;</code></pre>
+<p>I used a full join because I did not want to lose any variables that the two datasets did not have in common. I combined a dataset of 660 observaations with a dataset of 629 observations and got a dataset of 1022 observations. I lost 0 cases as a result of the join. Since I joined by 3 variables, instead of 26 columns, I now have 24.</p>
+<p>#Use all six core dplyr functions (filter, select, arrange, group_by, mutate, summarize)
+#to manipulate and explore your dataset. For mutate, create a new variable that is
+#a function of at least one other variable, preferably using a dplyr vector function
+#(see dplyr cheatsheet). It’s fine to use the _if, _at, _all versions of
+#mutate/summarize instead (indeed, it is encouraged if you have lots of variables)</p>
+<pre class="r"><code>animaldata1 &lt;-animaldata %&gt;% filter(duplicated(animaldata))
+head(animaldata1)</code></pre>
+<pre><code>##  [1] Family              Genus               CommonName         
+##  [4] Species             Species..ITIS.      BodyMass_kg        
+##  [7] BodyMassMale_kg     BodyMassFemale_kg   Refs1              
+## [10] Species.Common.Name TaxonClass          Overall.Sample.Size
+## [13] Overall.MLE         Overall.CI...lower  Overall.CI...upper 
+## [16] Male.Sample.Size    Male.MLE            Male.CI...lower    
+## [19] Male.CI...upper     Female.Sample.Size  Female.MLE         
+## [22] Female.CI...lower   Female.CI...upper  
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code>animaldata2 &lt;-animaldata %&gt;% select(BodyMass_kg) %&gt;% arrange() 
+head(animaldata2)</code></pre>
+<pre><code>##   BodyMass_kg
+## 1        4.65
+## 2        0.08
+## 3        5.00
+## 4        3.80
+## 5        5.40
+## 6        6.37</code></pre>
+<pre class="r"><code>animaldata3 &lt;-animaldata %&gt;% group_by(TaxonClass) %&gt;% mutate(median = median(BodyMass_kg), dev = sd(BodyMass_kg), absdev = abs(dev))</code></pre>
+<pre><code>## Warning: Factor `TaxonClass` contains implicit NA, consider using
+## `forcats::fct_explicit_na`
+
+## Warning: Factor `TaxonClass` contains implicit NA, consider using
+## `forcats::fct_explicit_na`</code></pre>
+<pre class="r"><code>head(animaldata3)</code></pre>
+<pre><code>## Warning: Factor `TaxonClass` contains implicit NA, consider using
+## `forcats::fct_explicit_na`
+
+## Warning: Factor `TaxonClass` contains implicit NA, consider using
+## `forcats::fct_explicit_na`</code></pre>
+<pre><code>## # A tibble: 6 x 26
+## # Groups:   TaxonClass [1]
+##   Family Genus CommonName Species Species..ITIS. BodyMass_kg BodyMassMale_kg
+##   &lt;fct&gt;  &lt;fct&gt; &lt;fct&gt;      &lt;chr&gt;   &lt;fct&gt;                &lt;dbl&gt;           &lt;dbl&gt;
+## 1 Cerco… Alle… Allen_s_S… Alleno… Allenopithecu…        4.65           6.13 
+## 2 Cheir… Allo… Hairy_ear… Alloce… Allocebus_tri…        0.08           0.092
+## 3 Cerco… Allo… L_Hoest_s… Alloch… Allochrocebus…        5              7    
+## 4 Cerco… Allo… Preuss_s_… Alloch… Allochrocebus…        3.8            4.7  
+## 5 Cerco… Allo… Sun_taile… Alloch… Allochrocebus…        5.4            6.89 
+## 6 Ateli… Alou… Ursine_Re… Alouat… Alouatta_arct…        6.37           7    
+## # … with 19 more variables: BodyMassFemale_kg &lt;dbl&gt;, Refs1 &lt;fct&gt;,
+## #   Species.Common.Name &lt;fct&gt;, TaxonClass &lt;fct&gt;, Overall.Sample.Size &lt;int&gt;,
+## #   Overall.MLE &lt;dbl&gt;, Overall.CI...lower &lt;dbl&gt;, Overall.CI...upper &lt;dbl&gt;,
+## #   Male.Sample.Size &lt;int&gt;, Male.MLE &lt;dbl&gt;, Male.CI...lower &lt;dbl&gt;,
+## #   Male.CI...upper &lt;dbl&gt;, Female.Sample.Size &lt;int&gt;, Female.MLE &lt;dbl&gt;,
+## #   Female.CI...lower &lt;dbl&gt;, Female.CI...upper &lt;fct&gt;, median &lt;dbl&gt;, dev &lt;dbl&gt;,
+## #   absdev &lt;dbl&gt;</code></pre>
+<pre class="r"><code>#doing summary statistics
+ sumanimaldata &lt;-animaldata %&gt;% summarize(mean(BodyMass_kg, na.rm=T), n(), n_distinct(TaxonClass))
+ head(sumanimaldata)</code></pre>
+<pre><code>##   mean(BodyMass_kg, na.rm = T) n() n_distinct(TaxonClass)
+## 1                     5.516884 658                      7</code></pre>
+<pre class="r"><code> demanimaldata &lt;- animaldata %&gt;% summarize(mean(Female.Sample.Size, na.rm = T), mean(Male.Sample.Size, na.rm = T), mean(Overall.Sample.Size, na.rm = T) )
+ head(demanimaldata)</code></pre>
+<pre><code>##   mean(Female.Sample.Size, na.rm = T) mean(Male.Sample.Size, na.rm = T)
+## 1                             224.727                          210.1821
+##   mean(Overall.Sample.Size, na.rm = T)
+## 1                             472.8079</code></pre>
+<pre class="r"><code> #exploring the life expectancy variables
+ maxminanimaldata &lt;- animaldata %&gt;% group_by(TaxonClass) %&gt;% summarize(max(Overall.MLE,na.rm=T), sd(Overall.MLE, na.rm = T), median(Overall.MLE, na.rm = T), mean(Overall.MLE, na.rm = T))</code></pre>
+<pre><code>## Warning: Factor `TaxonClass` contains implicit NA, consider using
+## `forcats::fct_explicit_na`</code></pre>
+<pre><code>## Warning in max(Overall.MLE, na.rm = T): no non-missing arguments to max;
+## returning -Inf
+
+## Warning in max(Overall.MLE, na.rm = T): no non-missing arguments to max;
+## returning -Inf</code></pre>
+<pre class="r"><code> head(maxminanimaldata)</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##   TaxonClass `max(Overall.ML… `sd(Overall.MLE… `median(Overall… `mean(Overall.M…
+##   &lt;fct&gt;                 &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
+## 1 Amphibia                7.5             1.43             4.95             5.37
+## 2 Arachnida            -Inf              NA               NA              NaN   
+## 3 Aves                   47               7.34            10.4             12.2 
+## 4 Chondrich…             26.7            14.6             16.4             16.4 
+## 5 Mammalia               42               7.49            13.2             14.7 
+## 6 Reptilia               30.9             7.01            11.4             11.6</code></pre>
+<p>I used the dplyr functions to pick apart my data and look through it: filter to cut out any duplicated data (there is none!), select to view one variable then arranged that variable, and group_by to create groups before using mutate to make new stats columns. I used summary statistics to find the mean body size, n to find the size of my dataset, and the number of distinct taxa. I also used mean on my 3 sample size variables (Female, Male, Overall) to compare the average number of sexes sampled; more females were sampled than males. But the really interesting part was when I used summary statistics on the life expectancy data! I grouped by each taxa and found the mean, max, min, median, and standard deviation!</p>
+<pre class="r"><code>#data visualization
+#plot1: maybe plot something other than taxonclass as fill
+ggplot(animaldata, aes(x = animaldata$TaxonClass, fill=animaldata$TaxonClass))+
+  geom_bar(aes(y=animaldata$Overall.MLE), stat=&quot;summary&quot;, fun.y=&quot;mean&quot;)+ theme_classic() + ggtitle(&quot;Max Lifespan by Taxon&quot;) +xlab (&quot;Taxon&quot;) + theme(axis.text.x = element_text(face=&quot;bold&quot;, color=&quot;black&quot;, 
+                           size=7, angle=15),
+          axis.text.y = element_text(face=&quot;bold&quot;, color=&quot;black&quot;, 
+                           size=10, angle=0)) + ylab(&quot;Overall MLE&quot;)</code></pre>
+<pre><code>## Warning: Removed 330 rows containing non-finite values (stat_summary).</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>#plot2
+ggplot(animaldata, aes(x=animaldata$Male.Sample.Size, y=animaldata$Female.Sample.Size, color=animaldata$TaxonClass)) + geom_point() +  theme_minimal() + scale_color_brewer(palette=&quot;Dark2&quot;) + ggtitle(&quot;Male Sample Size vs. Female Sample Size&quot;) +xlab (&quot;Male Sample Size&quot;) + ylab(&quot;Female Sample Size&quot;)</code></pre>
+<pre><code>## Warning: Removed 334 rows containing missing values (geom_point).</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
+<p>My first plot depicts the average maximum lifespan per Taxon. I thought it would be interesting to compare the life spans of zoo animals between taxa. Surprisingly, the group with the highest average is the Chondricthyes which is a group that includes cartilaginous fishes (sharks and rays). Mammals live the second longest, followed by birds then reptiles. Amphibians are in the fifth rank. In last place are the arachnids, which is no surprise.</p>
+<p>My second plot is a scatterplot that compares the number of male and female samples. There is a very apparent positive trend in the graph: the more male samples that are taken, the more female samples are taken in that taxon. The most male and female samples were taken in the Aves taxon, at well over 1,000 samples for each sex (for one data point).</p>
+<pre class="r"><code>animaldata %&gt;% select_if(is.numeric) -&gt; df
+df[is.finite(rowSums(df)),]-&gt; df
+
+#df &lt;- df[!is.nan(df)]
+df %&gt;%na.omit</code></pre>
+<pre><code>##     BodyMass_kg BodyMassMale_kg BodyMassFemale_kg Overall.Sample.Size
+## 8          5.38           6.420            4.3300                 260
+## 42         0.48           0.499            0.4680                 565
+## 45         0.24           0.290            0.1900                 413
+## 64         7.50           9.470            5.5000                 135
+## 79         5.74           7.350            4.1300                 612
+## 103        8.89           9.890            7.9000                1071
+## 108        9.45          12.400            6.5000                 573
+## 117        1.48           1.410            1.5600                 161
+## 126        0.20           0.214            0.1940                 700
+## 156        2.21           2.210            2.2100                2043
+## 185        9.50          10.970            8.0300                 300
+## 197        7.50           8.900            6.1000                 183
+## 203       23.60          34.400           12.8000                 258
+## 220        0.06           0.063            0.0672                 297
+## 232        6.50           6.400            6.6000                 135
+## 237        0.42           0.462            0.3760                 167
+## 239        0.76           0.794            0.7340                 135
+## 240       39.10          45.000           33.2000                 297
+## 241       53.70          60.000           47.4000                 685
+## 244       13.40          16.900            9.9000                 134
+## 264        1.76           1.940            1.5800                 261
+## 273       56.75          77.900           35.6000                 219
+## 274       57.15          78.500           35.8000                 178
+## 293        3.73           3.703            3.7560                 129
+## 318        0.41           0.418            0.4040                 843
+## 323        0.82           0.920            0.7230                 426
+## 340       11.30          11.900           10.7000                 308
+## 361        3.51           3.550            3.4700                 426
+## 362        3.58           3.630            3.5200                 631
+##     Overall.MLE Overall.CI...lower Overall.CI...upper Male.Sample.Size Male.MLE
+## 8          17.9               16.8               19.9              133     17.8
+## 42          8.9                8.3                9.6              299      8.5
+## 45          7.3                6.5                7.8              200      7.4
+## 64         17.8               15.6               19.0               64     18.1
+## 79         15.0               13.9               16.1              294     15.7
+## 103        12.5               11.6               13.9              483     15.0
+## 108        14.7               12.9               16.1              240     13.6
+## 117        22.8               21.4               26.6               83     25.1
+## 126         5.9                5.4                6.2              356      5.7
+## 156        16.5               15.7               17.1             1043     16.5
+## 185        22.3               20.6               23.8              109     18.5
+## 197        26.6               25.4               27.8               93     26.4
+## 203        20.1               18.9               21.6              107     20.1
+## 220         8.7                8.1                9.4              153      8.7
+## 232        29.9               26.9               37.2               69     26.4
+## 237        12.4               11.4               13.2               85     12.2
+## 239        15.2               10.8               16.1               76     15.2
+## 240        35.6               31.8               37.8              134     31.5
+## 241        36.3               32.7               39.4              299     31.6
+## 244        27.3               25.2               29.8               57     27.2
+## 264        16.5               12.1               18.8              135     19.3
+## 273        28.7               25.6               32.6              105     25.2
+## 274        31.5               27.7               34.6               83     27.3
+## 293        11.7                9.5               15.6               66     10.7
+## 318        11.5               10.7               12.8              437     12.4
+## 323        14.7               13.7               16.2              164     13.7
+## 340        27.2               23.8               29.4              153     28.0
+## 361        19.9               18.5               21.1              241     20.7
+## 362        18.5               17.1               19.9              349     19.3
+##     Male.CI...lower Male.CI...upper Female.Sample.Size Female.MLE
+## 8              15.7            20.8                121       18.1
+## 42              8.0             9.3                266        9.6
+## 45              6.2             8.7                213        7.2
+## 64             13.0            19.5                 71       17.7
+## 79             14.0            16.2                303       14.3
+## 103            13.3            16.1                586       11.4
+## 108            11.1            16.0                312       15.6
+## 117            20.1            30.3                 78       22.3
+## 126             5.2             6.5                323        6.0
+## 156            15.6            17.7                944       16.5
+## 185            17.2            21.0                191       23.8
+## 197            24.0            28.4                 89       26.7
+## 203            18.4            21.6                151       20.0
+## 220             7.9             9.6                144        8.7
+## 232            22.4            33.4                 65       35.8
+## 237            11.1            13.1                 81       13.0
+## 239             9.5            16.7                 59       12.5
+## 240            25.6            35.7                163       43.2
+## 241            26.6            35.4                386       40.0
+## 244            22.3            29.3                 77       27.5
+## 264            15.5            23.7                126       11.4
+## 273            20.4            31.2                114       32.8
+## 274            20.0            31.4                 95       38.5
+## 293             8.5            15.6                 63       12.5
+## 318            10.8            13.7                401       11.3
+## 323            12.5            17.3                256       14.9
+## 340            22.3            31.2                155       26.8
+## 361            19.0            21.8                185       18.6
+## 362            16.8            21.1                277       17.8
+##     Female.CI...lower
+## 8                16.1
+## 42                8.4
+## 45                6.2
+## 64               14.5
+## 79               12.7
+## 103              10.2
+## 108              12.9
+## 117              19.5
+## 126               5.4
+## 156              15.1
+## 185              22.3
+## 197              23.9
+## 203              16.8
+## 220               7.9
+## 232              27.4
+## 237              10.8
+## 239               8.9
+## 240              33.4
+## 241              35.7
+## 244              24.9
+## 264               9.4
+## 273              28.1
+## 274              31.0
+## 293               8.4
+## 318              10.0
+## 323              13.9
+## 340              21.5
+## 361              16.7
+## 362              15.6</code></pre>
+<pre class="r"><code>animal_nums&lt;-df%&gt;%select_if(is.numeric)%&gt;%select(1:3)%&gt;%scale
+rownames(animal_nums)&lt;-df$CommonName
+
+animal_pca&lt;-princomp(animal_nums)
+names(animal_pca)</code></pre>
+<pre><code>## [1] &quot;sdev&quot;     &quot;loadings&quot; &quot;center&quot;   &quot;scale&quot;    &quot;n.obs&quot;    &quot;scores&quot;   &quot;call&quot;</code></pre>
+<pre class="r"><code>summary(animal_pca, loadings=T)</code></pre>
+<pre><code>## Importance of components:
+##                           Comp.1     Comp.2       Comp.3
+## Standard deviation     1.6868093 0.22633144 1.713273e-04
+## Proportion of Variance 0.9823149 0.01768514 1.013379e-08
+## Cumulative Proportion  0.9823149 0.99999999 1.000000e+00
+## 
+## Loadings:
+##                   Comp.1 Comp.2 Comp.3
+## BodyMass_kg        0.582  0.131  0.802
+## BodyMassMale_kg    0.576  0.629 -0.521
+## BodyMassFemale_kg  0.573 -0.766 -0.291</code></pre>
+<pre class="r"><code>eigval&lt;-animal_pca$sdev^2
+varprop=round(eigval/sum(eigval),2)
+
+ggplot()+geom_bar(aes(y=varprop,x=1),stat=&quot;identity&quot;)+xlab(&quot;&quot;)+geom_path(aes(y=varprop,x=1))+
+  geom_text(aes(x=1,y=varprop,label=round(varprop,2)),vjust=1,col=&quot;white&quot;,size=5)+
+  scale_y_continuous(breaks=seq(0,.6,.2),labels = scales::percent)+
+  scale_x_continuous(breaks=1:10)</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-4-1.png" width="672" />
+From this chart, it looks like my first principal component explains 98% of the data, so I will plot this one.</p>
+<pre class="r"><code>round(cumsum(eigval)/sum(eigval),2)</code></pre>
+<pre><code>## Comp.1 Comp.2 Comp.3 
+##   0.98   1.00   1.00</code></pre>
+<pre class="r"><code>eigval</code></pre>
+<pre><code>##       Comp.1       Comp.2       Comp.3 
+## 2.845326e+00 5.122592e-02 2.935304e-08</code></pre>
+<pre class="r"><code>summary(animal_pca, loadings=T)</code></pre>
+<pre><code>## Importance of components:
+##                           Comp.1     Comp.2       Comp.3
+## Standard deviation     1.6868093 0.22633144 1.713273e-04
+## Proportion of Variance 0.9823149 0.01768514 1.013379e-08
+## Cumulative Proportion  0.9823149 0.99999999 1.000000e+00
+## 
+## Loadings:
+##                   Comp.1 Comp.2 Comp.3
+## BodyMass_kg        0.582  0.131  0.802
+## BodyMassMale_kg    0.576  0.629 -0.521
+## BodyMassFemale_kg  0.573 -0.766 -0.291</code></pre>
+<pre class="r"><code>ggplot()+geom_point(aes(animal_pca$scores[,1],
+                        animal_pca$scores[,2]))+xlab(&quot;PC1&quot;)+ylab(&quot;PC2&quot;)</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>animal_pca$loadings[1:3,1:2]%&gt;%as.data.frame%&gt;%rownames_to_column%&gt;%
+ggplot()+geom_hline(aes(yintercept=0),lty=2)+
+  geom_vline(aes(xintercept=0),lty=2)+ylab(&quot;PC2&quot;)+xlab(&quot;PC1&quot;)+
+  geom_segment(aes(x=0,y=0,xend=Comp.1,yend=Comp.2),arrow=arrow(),col=&quot;red&quot;)+
+  geom_label(aes(x=Comp.1*1.1,y=Comp.2*1.1,label=rowname))</code></pre>
+<p><img src="/Project1_files/figure-html/unnamed-chunk-5-2.png" width="672" /></p>
+<p>PC1 describes the spread of the data on the X axis. PC2 describes the spread of the data on the Y axis. The difference in magnitude of the data explained by each principle component is apparent in the interval marks on each axis. PC1 has a range of -1 to 4 whereas PC2 has a range of -0.5 to 0.5. When we look at a plot of the loadings (which displays which variables contribute to the principle compenents), average body mass is more closely corellated to the male body mass than the female body mass. This is indicated by the smaller angle in between the vectors. We can also see that the vectors are more horizontally oriented (PC1) than vertically oriented (PC2).</p>
+<p><a href="/Project1">Link to project 1</a></p>
