@@ -23,7 +23,7 @@ theme = "hugo-sustain"
   Github        = "alissandraayala"
   Email         = "email@example.com"
   Twitter       = "AlissandraAyala"
-  LinkedIn      = "username"
+ 
 
 ## Main Menu
 [[menu.main]]
@@ -37,7 +37,7 @@ theme = "hugo-sustain"
   weight = 200
   url = "/projects/"
 [[menu.main]]
-  name = "resume"
-  identifier = "resume"
+  name = "About Me"
+  identifier = "About Me"
   weight = 300
-  url = "/resume/"
+  url = "/About Me/"
