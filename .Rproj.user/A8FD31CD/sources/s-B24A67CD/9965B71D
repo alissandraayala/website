@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1576367944658.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4017092900",
+    "id" : "9965B71D",
+    "lastKnownWriteTime" : 1576367960,
+    "last_content_update" : 1576367960942,
+    "path" : "~/Desktop/website/content/blog/2019-12-13-intro-to-python.md",
+    "project_path" : "content/blog/2019-12-13-intro-to-python.md",
+    "properties" : {
+        "cursorPosition" : "9,57",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "markdown"
+}
