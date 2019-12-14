@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1576366386279.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2038241336",
+    "id" : "43A343FF",
+    "lastKnownWriteTime" : 1576366419,
+    "last_content_update" : 1576366419879,
+    "path" : "~/Desktop/website/content/AboutMe.md",
+    "project_path" : "content/AboutMe.md",
+    "properties" : {
+        "cursorPosition" : "9,35",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "markdown"
+}

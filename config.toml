@@ -21,7 +21,7 @@ theme = "hugo-sustain"
 
 [params.social]
   Github        = "alissandraayala"
-  Email         = "email@example.com"
+  Email         = "aliayala5@gmail.com"
   Twitter       = "AlissandraAyala"
  
 
@@ -38,6 +38,6 @@ theme = "hugo-sustain"
   url = "/projects/"
 [[menu.main]]
   name = "About Me"
-  identifier = "AboutMe"
+  identifier = "About Me"
   weight = 300
   url = "/AboutMe/"
