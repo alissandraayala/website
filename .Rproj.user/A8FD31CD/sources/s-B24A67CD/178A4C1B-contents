@@ -7,5 +7,6 @@ tags:
 - projects
 title: Projects
 ---
+Here are some projects I have been working on this semester:
 [Link to project 1](/Project1)
 [Link to project 2](/Project2)
