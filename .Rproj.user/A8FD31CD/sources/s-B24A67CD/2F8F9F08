@@ -5,14 +5,14 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "0",
+    "hash" : "2545695956",
     "id" : "2F8F9F08",
     "lastKnownWriteTime" : 1576281380,
     "last_content_update" : 1576281380,
-    "path" : "~/Desktop/website/content/About Me.Rmarkdown",
-    "project_path" : "content/About Me.Rmarkdown",
+    "path" : "~/Desktop/website/content/AboutMe.Rmarkdown",
+    "project_path" : "content/AboutMe.Rmarkdown",
     "properties" : {
-        "cursorPosition" : "25,33",
+        "cursorPosition" : "15,38",
         "scrollLine" : "11"
     },
     "read_only" : false,
