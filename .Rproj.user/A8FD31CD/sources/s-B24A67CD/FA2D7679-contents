@@ -7,7 +7,7 @@ categories: []
 tags: []
 description: ''
 ---
-![](/blog/2019-12-13-blog-post_files/IMG_9382.HEIC)
+![](/post/2019-12-13-blog-post_files/IMG_9382.HEIC)
 This was our introduction to Python this semester, and my first experience with the program!
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
